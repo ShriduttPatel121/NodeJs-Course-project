@@ -23,6 +23,5 @@ router.get('/orders',shopConstroller.getOrderss);
 
 router.get('/products/:productId',shopConstroller.getProduct); 
 
-//router.get('/checkout',shopConstroller.getCheckout);
 
 module.exports = router;
