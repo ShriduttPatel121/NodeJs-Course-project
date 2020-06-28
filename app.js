@@ -3,8 +3,8 @@ const adminRoutes = require('./routes/admin');
  const shopRouts = require('./routes/shop');
 const bodyParser = require('body-parser');
 const notFoundPage = require('./controllers/404');
+const mongoose = require('mongoose');
 const path = require('path');
-const mongoConnect = require('./util/database').MongoConnect;
 const User = require('./models/user');
 const app = express();
 
@@ -32,6 +32,10 @@ app.use(shopRouts);
 
 app.use(notFoundPage.getError404Page);
 
-mongoConnect(() => {
+mongoose.connect('mongodb+srv://ShriduttPatel:RYBxFXmrhLJxNDYG@node-shop-pgh1l.mongodb.net/shop?retryWrites=true&w=majority')
+.then(result => {
     app.listen(3000);
+})
+.catch(error => {
+    console.log(error);
 })
