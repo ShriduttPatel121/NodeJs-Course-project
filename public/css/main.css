@@ -199,6 +199,7 @@ form {
 
 .image {
   height: 20rem;
+  max-width: 600px;
 }
 
 .image img {
