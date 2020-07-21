@@ -8,6 +8,7 @@ exports.getProducts = (req, res, next) => {
         prods: products,
         pageTitle: "Shridutt's Shop",
         path: "/products",
+        isAuthenticated: req.session.isAuthenticated,
       });
     })
     .catch((error) => {
@@ -23,6 +24,7 @@ exports.getProduct = (req, res, next) => {
         product: product,
         pageTitle: "Product details",
         path: "/products",
+        isAuthenticated: req.session.isAuthenticated,
       });
     })
     .catch((error) => {
@@ -37,6 +39,7 @@ exports.getIndex = (req, res, next) => {
         prods: products,
         pageTitle: "Shridutt's Shop",
         path: "/",
+        isAuthenticated: req.session.isAuthenticated,
       });
     })
     .catch((error) => {
@@ -54,6 +57,7 @@ exports.getCart = (req, res, next) => {
         path: "/cart",
         pageTitle: "your cart",
         products: products,
+        isAuthenticated: req.session.isAuthenticated,
       });
     })
     .catch();
@@ -79,7 +83,7 @@ exports.postOrders = (req, res, next) => {
     .populate("cart.items.productId")
     .execPopulate()
     .then((user) => {
-      console.log('name '+req.user.name);
+      console.log('name '+ req.user.name);
       const products = user.cart.items.map(i => {
         return {quantity : i.quantity, product : {...i.productId._doc}};
       });
@@ -112,6 +116,7 @@ exports.getOrderss = (req, res, next) => {
         path: "/orders",
         pageTitle: "Orders",
         orders: orders,
+        isAuthenticated: req.session.isAuthenticated
       });
     })
     .catch((e) => {
