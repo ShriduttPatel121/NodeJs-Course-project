@@ -2,6 +2,9 @@ const Product = require("../models/product");
 const mongoDb = require('mongodb');
 const product = require("../models/product");
 exports.getAddProduct = (req, res, next) => {
+  if(!req.session.isAuthenticated){
+    res.redirect('/login');
+  }
   res.render("admin/edit-product", {
     pageTitle: "Add product",
     path: "/admin/add-product",
@@ -49,7 +52,6 @@ exports.getProducts = (req, res, next) => {
   }
  const prodId = req.params.productId;
  Product.findById(prodId)
-  //Product.findByPk(prodId)
   .then(product => {
      if (!product){ 
       return res.redirect('/');
