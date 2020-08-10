@@ -32,6 +32,11 @@ app.use(session({secret:'my secret', resave : false, saveUninitialized: false, s
 app.use(csrfProtection);
 app.use(flash())
 
+app.use( (req, res, next) => {
+    res.locals.isAuthenticated = req.session.isAuthenticated;
+    res.locals.csrfToken = req.csrfToken();
+    next();
+});
 app.use((req, res, next) => {
     if(!req.session.user) {
         return next();
@@ -42,25 +47,31 @@ app.use((req, res, next) => {
         next();
     })
     .catch(error => {
-        throw new Error(error);
+        next(new Error(error));
     });
 
 })
 
-app.use( (req, res, next) => {
-    res.locals.isAuthenticated = req.session.isAuthenticated;
-    res.locals.csrfToken = req.csrfToken();
-    next();
-})
+
 
 app.use('/admin',adminRoutes);
 app.use(shopRouts);
 app.use(authRouts);
 
 
-
+app.use('/500', notFoundPage.getError500Page);
 app.use(notFoundPage.getError404Page);
 
+//  spacial error handling middleware.
+app.use((error, req, res, next) => {
+    res
+      .status(500)
+      .render("500", {
+        pageTitle: "Page not found",
+        path: "/notfound",
+        isAuthenticated: req.session.isAuthenticated,
+      });
+});
 mongoose.connect(MONGODB_URI)
 .then(result => {
     app.listen(3000);

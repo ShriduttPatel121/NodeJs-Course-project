@@ -12,7 +12,9 @@ exports.getProducts = (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -28,7 +30,9 @@ exports.getProduct = (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -39,11 +43,12 @@ exports.getIndex = (req, res, next) => {
         prods: products,
         pageTitle: "Shridutt's Shop",
         path: "/",
-        
       });
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -60,7 +65,11 @@ exports.getCart = (req, res, next) => {
         isAuthenticated: req.session.isAuthenticated,
       });
     })
-    .catch();
+    .catch((error) => {
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
+    });
 };
 
 exports.postCart = (req, res, next) => {
@@ -73,7 +82,9 @@ exports.postCart = (req, res, next) => {
       return res.redirect("/cart");
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -83,44 +94,48 @@ exports.postOrders = (req, res, next) => {
     .populate("cart.items.productId")
     .execPopulate()
     .then((user) => {
-      console.log('name '+ req.user.name);
-      const products = user.cart.items.map(i => {
-        return {quantity : i.quantity, product : {...i.productId._doc}};
+      console.log("name " + req.user.name);
+      const products = user.cart.items.map((i) => {
+        return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
       const order = new Order({
-        user : {
-          email : req.user.email,
-          userId : req.user
+        user: {
+          email: req.user.email,
+          userId: req.user,
         },
-        products : products
+        products: products,
       });
-      order.save()
-      .then((result) => {
-        return req.user.clearCart();
-        
-      })
-      .then(() => {
-        res.redirect("/orders");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-    })
+      order
+        .save()
+        .then((result) => {
+          return req.user.clearCart();
+        })
+        .then(() => {
+          res.redirect("/orders");
+        })
+        .catch((error) => {
+          const er = new Error(error);
+          er.httpStatusCode = 500;
+          return next(er);
+        });
+    });
 };
 
 exports.getOrderss = (req, res, next) => {
-  Order.find({'user.userId': req.user._id})
+  Order.find({ "user.userId": req.user._id })
     .then((orders) => {
       console.log(orders);
       res.render("shop/orders", {
         path: "/orders",
         pageTitle: "Orders",
         orders: orders,
-        isAuthenticated: req.session.isAuthenticated
+        isAuthenticated: req.session.isAuthenticated,
       });
     })
     .catch((e) => {
-      console.log(e);
+      const er = new Error(e);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -132,6 +147,8 @@ exports.postCartDeletProduct = (req, res, next) => {
       res.redirect("/cart");
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };

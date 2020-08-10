@@ -26,43 +26,42 @@ exports.getLogin = (req, res, next) => {
     pageTitle: "Login",
     isAuthenticated: false,
     errorMessage: message,
-    oldInput : { email : "", password : "" }
+    oldInput: { email: "", password: "" },
   });
 };
 
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
-      const errors = validationResult(req);
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).render("auth/login", {
       path: "/login",
       pageTitle: "Login",
       isAuthenticated: false,
       errorMessage: errors.array()[0].msg,
-      oldInput : { email : email, password : password }
+      oldInput: { email: email, password: password },
     });
   }
-    user.find({email})
-      bcrypt
-        .compare(password, req.user.password)
-        .then((doMatch) => {
-          if (doMatch) {
-            req.session.user = req.user;
-            req.session.isAuthenticated = true;
-            req.session.save((err) => {
-              console.log(err);
-              res.redirect("/");
-            });
-          } else {
-            req.flash("error", "Invalid email or password.");
-            res.redirect("/login");
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          res.redirect("/login");
-        })
+  bcrypt
+    .compare(password, req.user.password)
+    .then((doMatch) => {
+      if (doMatch) {
+        req.session.user = req.user;
+        req.session.isAuthenticated = true;
+        req.session.save((err) => {
+          console.log(err);
+          res.redirect("/");
+        });
+      } else {
+        req.flash("error", "Invalid email or password.");
+        res.redirect("/login");
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.redirect("/login");
+    });
 };
 
 exports.postLogout = (req, res, next) => {
@@ -82,7 +81,11 @@ exports.postSignup = (req, res, next) => {
       pageTitle: "Signup",
       isAuthenticated: false,
       errorMessage: errors.array()[0].msg,
-      oldInput : { email : email, password : password, confirmPassword : req.body.confirmPassword }
+      oldInput: {
+        email: email,
+        password: password,
+        confirmPassword: req.body.confirmPassword,
+      },
     });
   }
   bcrypt
@@ -105,7 +108,9 @@ exports.postSignup = (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
+      const er = new Error(error);
+      er.httpStatusCode = 500;
+      return next(er);
     });
 };
 
@@ -128,7 +133,7 @@ exports.getSignup = (req, res, next) => {
     pageTitle: "Signup",
     isAuthenticated: false,
     errorMessage: message,
-    oldInput : { email : "", password : "", confirmPassword : "" }
+    oldInput: { email: "", password: "", confirmPassword: "" },
   });
 };
 
@@ -151,8 +156,6 @@ exports.postRestPassword = (req, res, next) => {
   crypto.randomBytes(32, (error, buffer) => {
     if (error) {
       res.redirect("/reset");
-      console.log(error);
-            console.log(error);            
       console.log(error);
     }
     const token = buffer.toString("hex");
@@ -182,7 +185,9 @@ exports.postRestPassword = (req, res, next) => {
         });
       })
       .catch((err) => {
-        console.log(err);
+        const er = new Error(err);
+        er.httpStatusCode = 500;
+        return next(er);
       });
   });
 };
@@ -207,7 +212,9 @@ exports.getNewPassword = (req, res, next) => {
       });
     })
     .catch((er) => {
-      console.log(er);
+      const error = new Error(er);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -235,6 +242,8 @@ exports.postNewPassword = (req, res, next) => {
       res.redirect("/login");
     })
     .catch((er) => {
-      console.log(er);
+      const error = new Error(er);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
