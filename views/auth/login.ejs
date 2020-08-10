@@ -14,11 +14,11 @@
             <% } %>
             <div class="form-control">
                 <label for="email">Title</label>
-                <input type="email" name="email" id="email"/>
+                <input type="email" name="email" id="email" value="<%= oldInput.email%>"/>
             </div>
             <div class="form-control">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password"/>
+                <input type="password" name="password" id="password" value="<%= oldInput.password%>"/>
             </div>
             <input name="_csrf" type="hidden" value="<%= csrfToken %>">
             <button class="btn" type="submit">Login</button>
