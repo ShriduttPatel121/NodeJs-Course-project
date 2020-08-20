@@ -1,7 +1,7 @@
 const Product = require("../models/product");
 const mongoDb = require("mongodb");
-const product = require("../models/product");
 const { validationResult } = require("express-validator");
+const fileHelper = require('../util/file');
 exports.getAddProduct = (req, res, next) => {
   if (!req.session.isAuthenticated) {
     res.redirect("/login");
@@ -16,14 +16,32 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
-exports.postAddProduct = (req, res) => {
+exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
-  const imgUrl = req.body.imgUrl;
+  const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
+  console.log(image);
+  if (!image) {
+    //checking if multer has checked the file formate and all
+    console.log('in if')
+    return res.status(422).render("admin/edit-product", {
+      pageTitle: "Add product",
+      path: "/admin/add-product",
+      editing: false,
+      hasError: true,
+      product: {
+        title: title,
+        imgUrl: null,
+        price: price,
+        description: description,
+      },
+      errorMessage: 'attached file formate is not supported'
+    });
+  }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(500).render("admin/edit-product", {
+    return res.status(422).render("admin/edit-product", {
       pageTitle: "Add product",
       path: "/admin/add-product",
       editing: false,
@@ -37,6 +55,7 @@ exports.postAddProduct = (req, res) => {
       errorMessage: errors.array()[0].msg,
     });
   }
+  const imgUrl = image.path;
   const product = new Product({
     title: title,
     price: price,
@@ -122,7 +141,7 @@ exports.getEditProducts = (req, res, next) => {
 exports.postEditProduct = (req, res, next) => {
   const prodId = req.body.productId;
   const UpdatedTitle = req.body.title;
-  const UpdatedImgUrl = req.body.imgUrl;
+  const image = req.file;
   const UpdatedPrice = req.body.price;
   const UpdatedDescription = req.body.description;
   const errors = validationResult(req);
@@ -134,7 +153,6 @@ exports.postEditProduct = (req, res, next) => {
       hasError: true,
       product: {
         title: UpdatedTitle,
-        imgUrl: UpdatedImgUrl,
         price: UpdatedPrice,
         description: UpdatedDescription,
         _id: prodId,
@@ -147,9 +165,12 @@ exports.postEditProduct = (req, res, next) => {
       if (product.userId.toString() !== req.user._id.toString()) {
         return res.redirect("/");
       }
-      (product.title = UpdatedTitle),
-        (product.imgUrl = UpdatedImgUrl),
-        (product.price = UpdatedPrice);
+      product.title = UpdatedTitle;
+        if (image) {
+          fileHelper.deletefile(product.imgUrl);
+          product.imgUrl = image.path;
+        }
+        product.price = UpdatedPrice;
       product.description = UpdatedDescription;
       return product.save().then((result) => {
         res.redirect("/admin/products");
@@ -166,7 +187,11 @@ exports.postEditProduct = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  console.log(prodId);
+  Product.findById(prodId)
+  .then(pro => {
+    fileHelper.deletefile(pro.imgUrl);
+  })
+  .catch(error => next(error))
   Product.deleteOne({ _id: prodId, userId: req.user._id })
     .then(() => {
       res.redirect("/admin/products");

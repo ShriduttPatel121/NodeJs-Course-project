@@ -1,5 +1,8 @@
 const Product = require("../models/product");
 const Order = require("../models/order");
+const fs = require('fs');
+const PDFDocument = require('pdfkit');
+const path = require('path');
 
 exports.getProducts = (req, res, next) => {
   Product.find()
@@ -152,3 +155,59 @@ exports.postCartDeletProduct = (req, res, next) => {
       return next(er);
     });
 };
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+  
+
+
+  Order.findById(orderId)
+  .then(order => {
+    if (!order) {
+      return next(new Error('No order found with this order id'));
+    }
+    if (order.user.userId.toString() !== req.user._id.toString()) {
+      console.log(order.user.userId.toString())
+      console.log(req.user._id);
+      return next(new Error('Unauthorized'));
+    }
+
+    fileName = 'invoice -' + orderId + '.pdf';
+    const invoPath = path.join('data', 'invoices', fileName);
+    const pdfDoc = new PDFDocument();
+    
+
+    pdfDoc.fontSize(26).text('Invoice', { underline : true});
+    pdfDoc.text('--------------------------------------');
+    const ru = '\u20b9';
+    console.log(ru);
+    let totalPrice = 0;
+    pdfDoc.pipe(fs.createWriteStream(invoPath));
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; fileName="' + fileName + '"');
+    order.products.forEach(prod => {
+      totalPrice = totalPrice + (prod.product.price * prod.quantity)
+      pdfDoc.font('/Users/patelshridutt/Downloads/Roboto/Roboto-Black.ttf'/* path for roboto font*/).text(prod.product.title + ' - ' + prod.quantity + ' x ' + ru + prod.product.price);
+    });
+
+    pdfDoc.text('Total price : ' + ru + totalPrice);
+    
+    
+    pdfDoc.pipe(res);
+    pdfDoc.end();
+  })
+  .catch(err => {
+    console.log(err)
+    return next(err)
+  })
+
+  /* fs.readFile(invoPath, (error, data) => {
+    if (error) {
+      return next(error)
+    } else {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; fileName="' + fileName + '"')
+      res.send(data);
+    }
+  }); */
+}
