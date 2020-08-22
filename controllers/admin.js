@@ -21,10 +21,8 @@ exports.postAddProduct = (req, res, next) => {
   const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
-  console.log(image);
   if (!image) {
     //checking if multer has checked the file formate and all
-    console.log('in if')
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add product",
       path: "/admin/add-product",
@@ -111,7 +109,6 @@ exports.getProducts = (req, res, next) => {
 
 exports.getEditProducts = (req, res, next) => {
   const editMode = req.query.edit;
-  console.log(editMode);
   if (!editMode) {
     res.redirect("/");
   }

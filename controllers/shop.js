@@ -3,6 +3,8 @@ const Order = require("../models/order");
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const path = require('path');
+const session = require("express-session");
+const stripe = require('stripe')('sk_test_51HJ0x3AKYIM5CgkDQ4Ma2lDsKNyOFTSKbfcXz5GFSqgEMusep2Eqv20lcUzL60fbfd79dpZ5ZyBwop4fT9aB6Jig00WSDBzuQN')
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -123,13 +125,55 @@ exports.postCart = (req, res, next) => {
     });
 };
 
+exports.getCheckout = (req, res, next) => {
+  let products;
+  let total = 0;
+  req.user
+    .populate('cart.items.productId')
+    .execPopulate()
+    .then(user => {
+      products = user.cart.items;
+      total = 0;
+      products.forEach(p => {
+        total += p.quantity * p.productId.price;
+      });
+
+      return stripe.checkout.sessions.create({
+        payment_method_types : ['card'],
+        line_items : products.map(p => {
+          return {
+            name : p.productId.title,
+            description : p.productId.description,
+            amount : p.productId.price * 100,
+            currency : 'inr',
+            quantity : p.quantity
+          };
+        }),
+        success_url : req.protocol + '://' + req.get('host') + '/checkout/success',
+        cancel_url : req.protocol + '://' + req.get('host') + '/checkout/cancel'
+      })
+      .then(session => {
+        res.render('shop/checkout', {
+          path: '/checkout',
+          pageTitle: 'Checkout',
+          products: products,
+          totalSum: total,
+          sessionId : session.id
+        });
+      })
+    })
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
+};
 exports.postOrders = (req, res, next) => {
   let fetchCart;
   req.user
     .populate("cart.items.productId")
     .execPopulate()
     .then((user) => {
-      console.log("name " + req.user.name);
       const products = user.cart.items.map((i) => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
@@ -159,7 +203,6 @@ exports.postOrders = (req, res, next) => {
 exports.getOrderss = (req, res, next) => {
   Order.find({ "user.userId": req.user._id })
     .then((orders) => {
-      console.log(orders);
       res.render("shop/orders", {
         path: "/orders",
         pageTitle: "Orders",
@@ -199,8 +242,6 @@ exports.getInvoice = (req, res, next) => {
       return next(new Error('No order found with this order id'));
     }
     if (order.user.userId.toString() !== req.user._id.toString()) {
-      console.log(order.user.userId.toString())
-      console.log(req.user._id);
       return next(new Error('Unauthorized'));
     }
 
@@ -212,7 +253,6 @@ exports.getInvoice = (req, res, next) => {
     pdfDoc.fontSize(26).text('Invoice', { underline : true});
     pdfDoc.text('--------------------------------------');
     const ru = '\u20b9';
-    console.log(ru);
     let totalPrice = 0;
     pdfDoc.pipe(fs.createWriteStream(invoPath));
     res.setHeader('Content-Type', 'application/pdf');
@@ -243,3 +283,4 @@ exports.getInvoice = (req, res, next) => {
     }
   }); */
 }
+

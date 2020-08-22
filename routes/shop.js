@@ -16,11 +16,15 @@ router.get('/cart', isAuth, shopConstroller.getCart);
 
 router.post('/cart-delete-item', isAuth, shopConstroller.postCartDeletProduct)
 
-router.post('/create-order', isAuth, shopConstroller.postOrders);
+router.get('/checkout/success', isAuth, shopConstroller.postOrders);// postOrder controller was used before checkout fun. was made but it is same so it will be used
+
+router.get('/checkout/cancel', shopConstroller.getCheckout);
 
 router.get('/orders', isAuth, shopConstroller.getOrderss);
 
 router.get('/products/:productId',shopConstroller.getProduct);
+
+router.get('/checkout', isAuth, shopConstroller.getCheckout)
 
 router.get('/orders/:orderId', isAuth, shopConstroller.getInvoice);
 
