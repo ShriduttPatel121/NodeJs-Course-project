@@ -80,7 +80,7 @@ app.use(authRouts);
 
 
 app.use((error, req, res, next) => {
-    console.log('in error middleware');
+    console.log(error);
     res
       .status(500)
       .render("500", {

@@ -5,13 +5,28 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 
 exports.getProducts = (req, res, next) => {
+  const page = +req.query.page || 1;
+  const ITEMS_PER_PAGE = 2;
+  let totalItems;
   Product.find()
+  .countDocuments()
+  .then(numOfPro => {
+    totalItems = numOfPro;
+    return Product.find()
+    .skip(((page - 1) * ITEMS_PER_PAGE))
+    .limit(ITEMS_PER_PAGE)
+    })
     .then((products) => {
-      res.render("shop/product-list", {
+      res.render("shop/index", {
         prods: products,
         pageTitle: "Shridutt's Shop",
         path: "/products",
-        isAuthenticated: req.session.isAuthenticated,
+        currentPage : page,
+        hasNextPage :ITEMS_PER_PAGE * page < totalItems,
+        hasPreviousPage : page > 1,
+        nextPage : page + 1,
+        previousPage : page - 1,
+        lastPage : Math.ceil(totalItems / ITEMS_PER_PAGE)
       });
     })
     .catch((error) => {
@@ -40,15 +55,32 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
+  const page = +req.query.page || 1;
+  const ITEMS_PER_PAGE = 2;
+  let totalItems;
   Product.find()
+  .countDocuments()
+  .then(numOfPro => {
+    totalItems = numOfPro;
+    return Product.find()
+    .skip(((page - 1) * ITEMS_PER_PAGE))
+    .limit(ITEMS_PER_PAGE)
+    })
     .then((products) => {
       res.render("shop/index", {
         prods: products,
         pageTitle: "Shridutt's Shop",
         path: "/",
+        currentPage : page,
+        hasNextPage :ITEMS_PER_PAGE * page < totalItems,
+        hasPreviousPage : page > 1,
+        nextPage : page + 1,
+        previousPage : page - 1,
+        lastPage : Math.ceil(totalItems / ITEMS_PER_PAGE)
       });
     })
     .catch((error) => {
+      console.log(error);
       const er = new Error(error);
       er.httpStatusCode = 500;
       return next(er);
